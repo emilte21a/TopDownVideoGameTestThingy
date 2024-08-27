@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "dgSpecHash": "WFTsY0iH2Tc=",
+  "success": true,
+  "projectFilePath": "c:\\Users\\macho\\TOPDOWNGAME222\\TOPDOWNGAME\\TOPDOWNGAME.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\macho\\.nuget\\packages\\microsoft.toolkit.highperformance\\7.1.2\\microsoft.toolkit.highperformance.7.1.2.nupkg.sha512",
+    "C:\\Users\\macho\\.nuget\\packages\\raylib-cs\\6.0.0\\raylib-cs.6.0.0.nupkg.sha512",
+    "C:\\Users\\macho\\.nuget\\packages\\raylib-cslo\\4.2.0.9\\raylib-cslo.4.2.0.9.nupkg.sha512",
+    "C:\\Users\\macho\\.nuget\\packages\\system.numerics.vectors\\4.5.0\\system.numerics.vectors.4.5.0.nupkg.sha512"
+  ],
+  "logs": []
+}
