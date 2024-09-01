@@ -16,6 +16,7 @@
     <Content Include="Images\**\*.*" CopyToOutputDirectory="Always" />
     <Content Include="Audio\**\*.*" CopyToOutputDirectory="Always" />
     <Content Include="Script\**\*.*" CopyToOutputDirectory="Always" />
+    <Content Include="Saves\**\*.*" CopyToOutputDirectory="Always" />
   </ItemGroup>
 
 </Project>

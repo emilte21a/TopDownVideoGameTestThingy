@@ -5,6 +5,8 @@ public abstract class Tile : GameObject
     public Texture2D texture;
     public Vector2 position;
     public bool isSolid;
+    public Item itemToDrop;
+    public byte tileID;
 }
 
 public class StoneTile : Tile
@@ -13,10 +15,13 @@ public class StoneTile : Tile
 
     public StoneTile(Vector2 pos)
     {
+        tileID = 0;
         isSolid = true;
         tag = "Tile";
         position = pos;
         rectangle = new Rectangle(position.X, position.Y, 24, 24);
+
+        itemToDrop = new StoneItem();
 
         if (stoneTexture.Id == 0)
         {
@@ -32,6 +37,7 @@ public class BackgroundTile : Tile
 
     public BackgroundTile(Vector2 pos)
     {
+        tileID = 1;
         isSolid = false;
         tag = "Tile";
         position = pos;
@@ -42,5 +48,24 @@ public class BackgroundTile : Tile
             brickTexture = Raylib.LoadTexture("Images/BackGroundTexture.png");
         }
         texture = brickTexture;
+    }
+}
+
+public class IronOre : Tile
+{
+    static Texture2D ironOreTexture;
+    public IronOre(Vector2 pos)
+    {
+        tileID = 2;
+        isSolid = true;
+        tag = "Tile";
+        position = pos;
+        rectangle = new Rectangle(position.X, position.Y, 24, 24);
+
+        itemToDrop = new IronOreItem();
+
+        if (ironOreTexture.Id == 0) ironOreTexture = Raylib.LoadTexture("Images/IronOreTexture.png");
+
+        texture = ironOreTexture;
     }
 }

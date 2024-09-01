@@ -126,8 +126,8 @@ public class Player : Entity
         Raylib.DrawRectangle((int)position.X - 12, (int)position.Y - 10, 50, 2, new Color(255, 255, 255, 120));
         Raylib.DrawRectangle((int)position.X - 12, (int)position.Y - 10, (int)stamina / 2, 2, staminaColor);
 
-        Raylib.DrawText($"{hoveringTile}", (int)position.X, (int)position.Y - 20, 5, Color.SkyBlue);
-        Raylib.DrawText($"{inventory.currentActiveItem}", (int)position.X, (int)position.Y - 50, 5, Color.SkyBlue);
+        Raylib.DrawTextEx(Game.customFont, $"{hoveringTile}", new Vector2((int)position.X, (int)position.Y - 20), 5, 2, Color.SkyBlue);
+        Raylib.DrawTextEx(Game.customFont, $"{inventory.currentActiveItem}", new Vector2((int)position.X, (int)position.Y - 50), 5, 2, Color.SkyBlue);
     }
 
     public void MovePlayer(PhysicsBody physicsBody, float speed)

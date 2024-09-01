@@ -1,16 +1,16 @@
 public class WorldGeneration : GameObject
 {
-
     public static List<Tile> tilesInWorld;
     public static List<Tile> tilesThatShouldRender;
 
-    public int worldWidth = 100, worldHeight = 100;
+
+    public ushort worldWidth = 100, worldHeight = 100;
 
     private byte threshold = 126;
 
     private int seed;
 
-    public Tile[,] tileMap;
+    public GameObject[,] tileMap;
 
     Texture2D tileTexture = Raylib.LoadTexture("Images/TileSheet.png");
     int numTilesInColumn = 4;
@@ -50,6 +50,19 @@ public class WorldGeneration : GameObject
 
             }
         }
+
+        for (int x = 0; x < tileMap.GetLength(0); x++)
+        {
+            for (int y = 0; y < tileMap.GetLength(1); y++)
+            {
+                if (tileMap[x, y].GetType() == typeof(BackgroundTile) && Random.Shared.Next(0, worldWidth / 2) == 3)
+                {
+                    IronOre ironOre = new IronOre(new Vector2(x * 24, y * 24));
+                    PlaceTile(ironOre);
+                    tileMap[x, y] = ironOre;
+                }
+            }
+        }
         Raylib.UnloadImage(perlinNoise);
     }
 
@@ -85,7 +98,7 @@ public class WorldGeneration : GameObject
     public Tile GetTile(int x, int y)
     {
         if (x < 0 || x >= worldWidth || y < 0 || y >= worldHeight) return null;
-        return tileMap[x, y];
+        return (Tile)tileMap[x, y];
     }
 
     int GetTileIndex(int x, int y)
@@ -123,8 +136,6 @@ public class WorldGeneration : GameObject
         14, // 1110
         15 // 1111
     };
-
-
 
     public void PlaceTile(Tile tile)
     {

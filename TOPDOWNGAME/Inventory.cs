@@ -3,7 +3,7 @@
 public class Inventory
 {
     byte maxItems = 5;
-    byte iconSizeUI = 24;
+    byte iconSizeUI = 48;
     public ItemSlot[] itemsInInventory;
     public int currentItemIndex = 0;
     public Item currentActiveItem;
@@ -22,7 +22,6 @@ public class Inventory
 
     public void AddToInventory(Item item)
     {
-        System.Console.WriteLine(item + " Was Added");
         if (item == null)
         {
             throw new ArgumentNullException(nameof(item), "Item cannot be null.");
@@ -30,7 +29,7 @@ public class Inventory
 
         for (int i = 0; i < itemsInInventory.Length; i++)
         {
-            if (itemsInInventory[i] != null && itemsInInventory[i].item != null && itemsInInventory[i].item.Equals(item))
+            if (itemsInInventory[i].item != null && itemsInInventory[i].item.ID.Equals(item.ID))
             {
                 itemsInInventory[i].amount++;
                 return;
@@ -65,7 +64,7 @@ public class Inventory
     public void Draw()
     {
         float startX = (Game.ScreenWidth - (iconSizeUI + 12) * itemsInInventory.Length) / 2f;
-        float fixedY = Game.ScreenHeight - 250;
+        float fixedY = Game.ScreenHeight - 200;
 
         for (int i = 0; i < itemsInInventory.Length; i++)
         {
@@ -77,6 +76,7 @@ public class Inventory
             if (itemsInInventory[i].item != null)
             {
                 Raylib.DrawTexture(itemsInInventory[i].item.icon, (int)abilityPositionUI.X, (int)abilityPositionUI.Y, Color.White);
+                Raylib.DrawTextEx(Game.customFont, $"{itemsInInventory[i].amount}", new Vector2((int)abilityPositionUI.X + 24, (int)abilityPositionUI.Y + 24), 18, 2, Color.White);
             }
         }
     }

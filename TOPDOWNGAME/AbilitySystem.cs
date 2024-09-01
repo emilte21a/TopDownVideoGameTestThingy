@@ -1,6 +1,6 @@
 public class AbilitySystem
 {
-    byte iconSizeUI = 24;
+    byte iconSizeUI = 48;
     public List<Ability> abilities;
     public AbilitySystem()
     {
@@ -55,11 +55,11 @@ public class AbilitySystem
             else opacity = 255;
 
 
-            Vector2 abilityPositionUI = new Vector2(Game.ScreenWidth / 2 - iconSizeUI / 2 - abilities.Count * iconSizeUI / 2 + i * (iconSizeUI + 12), Game.ScreenHeight - 300);
+            Vector2 abilityPositionUI = new Vector2(Game.ScreenWidth / 2 - iconSizeUI / 2 - abilities.Count * iconSizeUI / 2 + i * (iconSizeUI + 24), Game.ScreenHeight - 300);
             Raylib.DrawRectangle((int)abilityPositionUI.X - 2, (int)abilityPositionUI.Y - 2, iconSizeUI + 4, iconSizeUI + 4, Color.Black);
             Raylib.DrawRectangleLines((int)abilityPositionUI.X - 2, (int)abilityPositionUI.Y - 2, iconSizeUI + 4, iconSizeUI + 4, Color.White);
-            Raylib.DrawTexture(abilities[i].icon, (int)abilityPositionUI.X, (int)abilityPositionUI.Y, new Color(255, opacity, opacity, opacity));
-            Raylib.DrawText($"{abilities[i].keyToActivate}", (int)abilityPositionUI.X, (int)abilityPositionUI.Y - 12, 10, Color.White);
+            Raylib.DrawTexture(abilities[i].icon, (int)abilityPositionUI.X + iconSizeUI / 4, (int)abilityPositionUI.Y + iconSizeUI / 4, new Color(255, opacity, opacity, opacity));
+            Raylib.DrawTextEx(Game.customFont, $"{abilities[i].keyToActivate}", new Vector2((int)abilityPositionUI.X + 12, (int)abilityPositionUI.Y - 20), 20, 5, Color.White);
         }
     }
 }
