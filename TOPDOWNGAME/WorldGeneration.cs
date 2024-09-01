@@ -3,7 +3,6 @@ public class WorldGeneration : GameObject
     public static List<Tile> tilesInWorld;
     public static List<Tile> tilesThatShouldRender;
 
-
     public ushort worldWidth = 100, worldHeight = 100;
 
     private byte threshold = 126;

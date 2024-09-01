@@ -7,7 +7,6 @@ public class Collider : Component
 
 public class PhysicsBody : Component
 {
-    #region variabler
 
     public Vector2 acceleration = Vector2.Zero;
 
@@ -16,10 +15,6 @@ public class PhysicsBody : Component
     public Vector2 gravity = new Vector2(0, 20f);
 
     public Gravity UseGravity;
-
-    public AirState airState;
-
-    #endregion
 
     public enum Gravity
     {

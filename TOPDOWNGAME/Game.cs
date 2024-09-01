@@ -1,5 +1,6 @@
 global using Raylib_cs;
 global using System.Numerics;
+global using System.Text.Json.Serialization;
 using Raylib_CsLo;
 using Raylib_CsLo.InternalHelpers;
 using System.Text.Json;
@@ -17,6 +18,8 @@ using Sound = Raylib_cs.Sound;
 
 public class Game
 {
+    string GAMENAME = "The dwell";
+
     public static int ScreenWidth = 1920;
     public static int ScreenHeight = 1080;
     public static Camera2D camera;
@@ -34,23 +37,29 @@ public class Game
 
     // Sound breakingSomething = Raylib.LoadSound("Audio/");
 
+    List<GameState> gameSaves = new List<GameState>();
+
     enum CurrentScene
     {
         start, inGame
     }
 
-    CurrentScene currentScene;
+    CurrentScene currentScene = CurrentScene.start;
 
     public Game()
     {
         Raylib.SetConfigFlags(ConfigFlags.FullscreenMode);
-        Raylib.InitWindow(ScreenWidth, ScreenHeight, "Game");
+        Raylib.InitWindow(ScreenWidth, ScreenHeight, GAMENAME);
         Raylib.InitAudioDevice();
         Raylib.SetExitKey(KeyboardKey.Null);
         InitializeInstances();
-        currentScene = CurrentScene.start;
         customFont = Raylib.LoadFontEx("Images/alagard.ttf", 120, null, 0);
-        System.Console.WriteLine(Raylib.GetFontDefault());
+        Console.WriteLine(Raylib.GetFontDefault());
+
+
+        //gameSaves = LoadAllSaves();
+
+        LoadAllGameSaves("Saves/saves.json");
     }
 
     private void InitializeInstances()
@@ -78,27 +87,15 @@ public class Game
         zSortList = new();
         zSortList.Add(player);
         zSortList.Add(worldGeneration);
+
         for (int i = 0; i < player.abilitySystem.abilities.Count; i++)
-        {
             zSortList.Add(player.abilitySystem.abilities[i]);
-        }
+
 
         zSortList.Sort((a, b) => a.Z_layer.CompareTo(b.Z_layer));
-
-
     }
 
-    bool pause = false;
 
-    bool save = false;
-
-    bool load = false;
-
-    bool exitGame = false;
-
-    bool exitToMainMenu = false;
-
-    bool startNewGame = false;
 
     public void Run()
     {
@@ -109,7 +106,15 @@ public class Game
         }
     }
 
+    bool isGamePaused = false;
 
+    bool shouldExitGame = false;
+
+    bool exitToMainMenu = false;
+
+    bool shouldStartNewGame = false;
+
+    bool isLoadFilePageOpen = false;
 
     private void Update()
     {
@@ -117,37 +122,29 @@ public class Game
         if (currentScene == CurrentScene.start)
         {
             exitToMainMenu = false;
-            if (startNewGame)
+            if (shouldStartNewGame)
             {
                 StartNewGame();
-                currentScene = CurrentScene.inGame;
-                pause = false;
             }
-
-            if (load)
-            {
-                LoadGame("Saves/savegame.JSON");
-                currentScene = CurrentScene.inGame;
-                pause = false;
-            }
-
         }
 
         if (currentScene == CurrentScene.inGame)
         {
-            if (Raylib.IsKeyPressed(KeyboardKey.Escape) && !pause) pause = true;
-            else if (Raylib.IsKeyPressed(KeyboardKey.Escape) && pause) pause = false;
+            if (Raylib.IsKeyPressed(KeyboardKey.Escape) && !isGamePaused) isGamePaused = true;
+            else if (Raylib.IsKeyPressed(KeyboardKey.Escape) && isGamePaused) isGamePaused = false;
 
-            if (pause)
-                if (exitToMainMenu) currentScene = CurrentScene.start;
+            if (isGamePaused)
+            {
+                if (exitToMainMenu)
+                {
+                    currentScene = CurrentScene.start;
+                    isLoadFilePageOpen = false;
+                }
+            }
 
-            if (!pause)
+            if (!isGamePaused)
             {
                 timeElapsed += (int)Raylib.GetFrameTime();
-                if (save)
-                {
-                    SaveGame("Saves/savegame.JSON");
-                }
 
                 gameSystems[0].Update();
                 player.Update();
@@ -155,7 +152,7 @@ public class Game
                 camera.Target = Raymath.Vector2Lerp(camera.Target, player.position + new Vector2(12, 12), 8f * Raylib.GetFrameTime());
 
                 cameraZoom += Raylib.GetMouseWheelMove() / 10f;
-                cameraZoom = Raymath.Clamp(cameraZoom, 0, 4);
+                cameraZoom = Raymath.Clamp(cameraZoom, 0.1f, 4);
                 camera.Zoom = cameraZoom;
 
                 Vector2 mousePos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
@@ -183,57 +180,92 @@ public class Game
 
 
 
-    private void Draw()
+    private async void Draw()
     {
         Raylib.BeginDrawing();
-        Raylib.ClearBackground(Color.White);
 
-        if (currentScene == CurrentScene.start)
+        switch (currentScene)
         {
-            startNewGame = RayGui.GuiButton(new Raylib_CsLo.Rectangle(ScreenWidth / 2 - 100, ScreenHeight / 2 - 200, 200, 75), "New Save");
-            load = RayGui.GuiButton(new Raylib_CsLo.Rectangle(ScreenWidth / 2 - 100, ScreenHeight / 2 - 100, 200, 75), "Load Save");
-            exitGame = RayGui.GuiButton(new Raylib_CsLo.Rectangle(ScreenWidth / 2 - 100, ScreenHeight / 2, 200, 75), "Exit Game");
+
+            case CurrentScene.start:
+
+                Raylib.ClearBackground(Color.Black);
+                Raylib.DrawTextEx(customFont, GAMENAME, new Vector2(100, 100), 80, 5, Color.White);
+                if (isLoadFilePageOpen)
+                {
+                    for (int i = 0; i < gameSaves.Count; i++)
+                    {
+                        string buttonText = $"Save: {i + 1} - {gameSaves[i].SaveDate.ToString("g")}";
+                        if (RayGui.GuiButton(new Raylib_CsLo.Rectangle(ScreenWidth / 2 - 100, ScreenHeight / 2 - 200 + i * 80, 200, 75), buttonText))
+                        {
+                            LoadGame(gameSaves[i].SaveName);
+                            currentScene = CurrentScene.inGame;
+                            isGamePaused = false;
+                        }
+
+                        if (RayGui.GuiButton(new Raylib_CsLo.Rectangle(ScreenWidth / 2 + 110, ScreenHeight / 2 - 200 + i * 80, 50, 75), "X"))
+                            DeleteSave(gameSaves[i].SaveName);
+
+
+                    }
+
+                    if (RayGui.GuiButton(new Raylib_CsLo.Rectangle(100, ScreenHeight / 2 - 300, 200, 75), "Back") && isLoadFilePageOpen)
+                        isLoadFilePageOpen = false;
+
+                }
+                else
+                {
+                    // Button to create a new save
+                    if (RayGui.GuiButton(new Raylib_CsLo.Rectangle(100, ScreenHeight / 2 + 100, 200, 75), "New Save"))
+                        StartNewGame();
+
+                    if (RayGui.GuiButton(new Raylib_CsLo.Rectangle(100, ScreenHeight / 2 + 200, 200, 75), "Load world") && !isLoadFilePageOpen)
+                        isLoadFilePageOpen = true;
+
+                    shouldExitGame = RayGui.GuiButton(new Raylib_CsLo.Rectangle(100, ScreenHeight / 2 + 300, 200, 75), "Exit Game");
+                }
+                break;
+
+
+            case CurrentScene.inGame:
+
+                Raylib.ClearBackground(Color.White);
+                Raylib.BeginMode2D(camera);
+
+                foreach (var item in zSortList)
+                {
+                    item.Draw();
+                }
+
+                Raylib.DrawText("babbaaa", 0, 0, 20, Color.Orange);
+
+                Vector2 playerScreenPos = Raylib.GetWorldToScreen2D(player.position, camera);
+                Raylib.EndMode2D();
+
+                player.abilitySystem.Draw();
+                player.inventory.Draw();
+
+                Raylib.DrawTextEx(customFont, $"{player.position}", new Vector2(0, 40), 20, 5, Color.Orange);
+                Raylib.DrawTextEx(customFont, $"{InputManager.GetLastDirectionDelta()}", new Vector2(0, 80), 20, 5, Color.Orange);
+
+                if (isGamePaused)
+                {
+                    if (RayGui.GuiButton(new Raylib_CsLo.Rectangle(Raylib.GetScreenWidth() / 2 - 150, Raylib.GetScreenHeight() / 2 - 50, 300, 75), "Exit To Main Menu"))
+                    {
+                        currentScene = CurrentScene.start;
+                        isLoadFilePageOpen = false;
+                    }
+                }
+                break;
         }
-
-        if (currentScene == CurrentScene.inGame)
-        {
-            Raylib.BeginMode2D(camera);
-
-            foreach (var item in zSortList)
-            {
-                item.Draw();
-            }
-            // worldGeneration.Draw();
-            // player.Draw();
-
-            Raylib.DrawText("babbaaa", 0, 0, 20, Color.Orange);
-
-
-            Vector2 playerScreenPos = Raylib.GetWorldToScreen2D(player.position, camera);
-            Raylib.EndMode2D();
-
-            player.abilitySystem.Draw();
-            player.inventory.Draw();
-
-            // Raylib.BeginBlendMode(Raylib_cs.BlendMode.Additive);
-            // Raylib.DrawRectangle(0, 0, ScreenWidth, ScreenHeight, Color.Black);
-            // Raylib.DrawCircleGradient((int)playerScreenPos.X, (int)playerScreenPos.Y, 300, Color.Blank, Color.Black);
-            // Raylib.EndBlendMode();
-
-            Raylib.DrawFPS(0, 0);
-            Raylib.DrawTextEx(customFont, $"{player.position}", new Vector2(0, 40), 20, 5, Color.Orange);
-            Raylib.DrawTextEx(customFont, $"{InputManager.GetLastDirectionDelta()}", new Vector2(0, 80), 20, 5, Color.Orange);
-
-
-            if (pause)
-            {
-                save = RayGui.GuiButton(new Raylib_CsLo.Rectangle(Raylib.GetScreenWidth() / 2 - 150, Raylib.GetScreenHeight() / 2 - 125, 300, 150), "Save");
-                exitToMainMenu = RayGui.GuiButton(new Raylib_CsLo.Rectangle(Raylib.GetScreenWidth() / 2 - 150, Raylib.GetScreenHeight() / 2 + 75, 300, 150), "Exit To Main Menu");
-            }
-        }
-
+        Raylib.DrawFPS(0, 0);
         Raylib.EndDrawing();
-        if (exitGame) Raylib.CloseWindow();
+
+        if (shouldExitGame)
+        {
+            SaveAllGameSaves("Saves/saves.JSON");
+            Raylib.CloseWindow();
+        }
     }
 
     static float shakeDuration;
@@ -278,7 +310,12 @@ public class Game
 
     private void StartNewGame()
     {
+        // Optionally, prompt the player for a save name
+        string newSaveName = $"Save_{DateTime.Now.ToString("yyyyMMdd_HHmmss")}";
         InitializeInstances();
+        SaveGame(newSaveName);
+        currentScene = CurrentScene.inGame;
+        isGamePaused = false;
     }
 
     private GameState CaptureGameState()
@@ -286,12 +323,14 @@ public class Game
         var gameState = new GameState
         {
             PlayerPosition = player.position,
-            Entities = entities,
+            Entities = new List<Entity>(entities),
             TimeElapsed = timeElapsed,
             CameraZoom = camera.Zoom,
-            // Add any other necessary properties
+            Tiles = new List<TileData>(),
+            InventoryItemDatas = new List<InventoryItemData>()
         };
 
+        // Capture tiles
         foreach (Tile tile in worldGeneration.tileMap)
         {
             if (tile != null)
@@ -304,11 +343,12 @@ public class Game
             }
         }
 
-        foreach (var itemSlot in player.inventory.itemsInInventory)
+        // Capture inventory items
+        foreach (ItemSlot itemSlot in player.inventory.itemsInInventory)
         {
             if (itemSlot.item != null)
             {
-                gameState.Inventory.Add(new InventoryItemData
+                gameState.InventoryItemDatas.Add(new InventoryItemData
                 {
                     ItemID = itemSlot.item.ID,
                     Amount = itemSlot.amount
@@ -316,11 +356,9 @@ public class Game
             }
         }
 
-
-        // Logging the gameState for debugging
-        Console.WriteLine("Captured GameState: ");
+        // Debugging logs
+        Console.WriteLine("Captured GameState:");
         Console.WriteLine(JsonSerializer.Serialize(gameState, new JsonSerializerOptions { WriteIndented = true }));
-        // Add any other game state capturing here
 
         return gameState;
     }
@@ -330,12 +368,13 @@ public class Game
         player.position = gameState.PlayerPosition;
         timeElapsed = gameState.TimeElapsed;
         camera.Zoom = gameState.CameraZoom;
+        entities.Clear();
+        entities.Add(player);
 
         player.inventory = new Inventory();
 
-        foreach (var itemData in gameState.Inventory)
+        foreach (var itemData in gameState.InventoryItemDatas)
         {
-            // Assuming you have a way to retrieve an item by its ID
             Item item = ItemRegistry.GetItemByID(itemData.ItemID);
 
             if (item != null)
@@ -345,13 +384,9 @@ public class Game
                     player.inventory.AddToInventory(item);
                 }
             }
-            else
-            {
-                Console.WriteLine($"Item with ID {itemData.ItemID} not found.");
-            }
         }
 
-        worldGeneration.tileMap = new Tile[worldGeneration.worldWidth, worldGeneration.worldHeight]; // or however your tileMap is initialized
+        worldGeneration.tileMap = new Tile[worldGeneration.worldWidth, worldGeneration.worldHeight];
         WorldGeneration.tilesInWorld.Clear();
 
         foreach (var tileData in gameState.Tiles)
@@ -368,31 +403,36 @@ public class Game
                 worldGeneration.tileMap[(int)tile.position.X / 24, (int)tile.position.Y / 24] = tile;
                 WorldGeneration.tilesInWorld.Add(tile);
             }
-            else
-            {
-                Console.WriteLine($"Tile with ID {tileData.TileID} not found.");
-            }
         }
-
-        // Apply any other loaded state to the game
     }
 
-    private void SaveGame(string filePath)
+    private void SaveGame(string saveName)
     {
         // Ensure the directory exists
-        string directoryPath = Path.GetDirectoryName(filePath);
+        string directoryPath = "bin/Saves";
         if (!Directory.Exists(directoryPath))
         {
             Directory.CreateDirectory(directoryPath);
         }
 
         GameState gameState = CaptureGameState();
+        gameState.SaveName = saveName;
+        gameState.SaveDate = DateTime.Now;
+
         string jsonString = JsonSerializer.Serialize(gameState, new JsonSerializerOptions { WriteIndented = true });
+        string filePath = Path.Combine(directoryPath, $"{saveName}.json");
 
         try
         {
             File.WriteAllText(filePath, jsonString);
-            Console.WriteLine("Game saved successfully.");
+            Console.WriteLine($"Game saved successfully to {filePath}.");
+            // Optionally, update the in-memory gameSaves list
+            // var existingSave = gameSaves.FirstOrDefault(s => s.SaveName == saveName);
+            // if (existingSave != null)
+            // {
+            //     gameSaves.Remove(existingSave);
+            // }
+            gameSaves.Add(gameState);
         }
         catch (Exception ex)
         {
@@ -400,29 +440,125 @@ public class Game
         }
     }
 
-    private void LoadGame(string filePath)
+    private void LoadGame(string saveName)
+    {
+        string filePath = Path.Combine("Saves", $"{saveName}.json");
+        try
+        {
+            if (File.Exists(filePath))
+            {
+                string jsonString = File.ReadAllText(filePath);
+                GameState? gameState = JsonSerializer.Deserialize<GameState>(jsonString);
+
+                if (gameState == null)
+                {
+                    Console.WriteLine("Failed to deserialize game state.");
+                    return;
+                }
+
+                ApplyGameState(gameState);
+                Console.WriteLine($"Game loaded successfully from {filePath}.");
+            }
+            else
+            {
+                Console.WriteLine("Save file not found.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to load game: {ex.Message}");
+        }
+    }
+
+    private List<GameState> LoadAllSaves()
+    {
+        List<GameState> saves = new List<GameState>();
+        string directoryPath = "Saves";
+
+        if (Directory.Exists(directoryPath))
+        {
+            var saveFiles = Directory.GetFiles(directoryPath, "*.json");
+            foreach (var file in saveFiles)
+            {
+                try
+                {
+                    string jsonString = File.ReadAllText(file);
+                    GameState? gameState = JsonSerializer.Deserialize<GameState>(jsonString);
+                    if (gameState != null)
+                    {
+                        saves.Add(gameState);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to load save from {file}: {ex.Message}");
+                }
+            }
+        }
+
+        return saves;
+    }
+
+    private void DeleteSave(string saveName)
+    {
+        string filePath = Path.Combine("Saves", $"{saveName}.json");
+        try
+        {
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+                var save = gameSaves.FirstOrDefault(s => s.SaveName == saveName);
+                if (save != null)
+                {
+                    gameSaves.Remove(save);
+                }
+                Console.WriteLine($"Save '{saveName}' deleted successfully.");
+            }
+            else
+            {
+                Console.WriteLine("Save file not found.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to delete save: {ex.Message}");
+        }
+    }
+
+    private void SaveAllGameSaves(string filePath)
+    {
+        try
+        {
+            string jsonString = JsonSerializer.Serialize(gameSaves, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(filePath, jsonString);
+            Console.WriteLine("All game saves saved successfully.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to save all game saves: {ex.Message}");
+        }
+    }
+
+    private void LoadAllGameSaves(string filePath)
     {
         if (File.Exists(filePath))
         {
-            string jsonString = File.ReadAllText(filePath);
-            GameState? gameState = JsonSerializer.Deserialize<GameState>(jsonString);
-
-            if (gameState == null)
+            try
             {
-                Console.WriteLine("Failed to deserialize game state.");
-                return;
+                string jsonString = File.ReadAllText(filePath);
+                gameSaves = JsonSerializer.Deserialize<List<GameState>>(jsonString) ?? new List<GameState>();
+                Console.WriteLine("All game saves loaded successfully.");
             }
-
-            // Logging the loaded GameState for debugging
-            Console.WriteLine("Loaded GameState: ");
-            Console.WriteLine(JsonSerializer.Serialize(gameState, new JsonSerializerOptions { WriteIndented = true }));
-
-            ApplyGameState(gameState);
-            Console.WriteLine("Game loaded successfully.");
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to load game saves: {ex.Message}");
+                gameSaves = new List<GameState>();
+            }
         }
         else
         {
-            Console.WriteLine("Save file not found.");
+            Console.WriteLine("No game saves file found, starting fresh.");
+            gameSaves = new List<GameState>();
         }
     }
 }

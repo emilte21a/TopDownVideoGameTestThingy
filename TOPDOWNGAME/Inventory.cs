@@ -6,7 +6,7 @@ public class Inventory
     byte iconSizeUI = 48;
     public ItemSlot[] itemsInInventory;
     public int currentItemIndex = 0;
-    public Item currentActiveItem;
+    public Item? currentActiveItem;
 
     public Inventory()
     {
@@ -115,6 +115,7 @@ public class ItemSlot
     public Color color;
     public KeyboardKey keyIndex;
 
+    [JsonConstructor]
     public ItemSlot(Item _item)
     {
         item = _item;

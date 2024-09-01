@@ -1,5 +1,3 @@
-
-
 public class Player : Entity
 {
     public Camera2D camera { get; init; }
@@ -10,7 +8,7 @@ public class Player : Entity
 
     public AbilitySystem abilitySystem;
 
-    public Tile hoveringTile;
+    public Tile? hoveringTile;
 
     Texture2D idleSide = Raylib.LoadTexture("Images/IdleSide.png");
     Texture2D idleUp = Raylib.LoadTexture("Images/IdleUp.png");

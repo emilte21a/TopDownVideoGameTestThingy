@@ -1,12 +1,19 @@
 public class GameState
 {
+    public string SaveName { get; set; } = "Default Save";
+    public DateTime SaveDate { get; set; } = DateTime.Now;
     public Vector2 PlayerPosition { get; set; }
-    public List<Vector2> EnemyPositions { get; set; } = new List<Vector2>();
     public int TimeElapsed { get; set; }
-    public List<TileData> Tiles { get; set; } = new List<TileData>();
+    public List<TileData> Tiles { get; set; }
     public float CameraZoom { get; set; }
-    public List<Entity> Entities { get; set; } = new List<Entity>();
-    public List<InventoryItemData> Inventory {get; set;} = new List<InventoryItemData>();
+    public List<Entity> Entities { get; set; }
+    public List<InventoryItemData> InventoryItemDatas { get; set; }
+
+    public GameState()
+    {
+        Tiles = new List<TileData>();
+        InventoryItemDatas = new List<InventoryItemData>();
+    }
 
 }
 
@@ -18,7 +25,7 @@ public class TileData
 
 public class InventoryItemData
 {
-    public int ItemID {get; set;}
-    public byte Amount {get; set;}
+    public int ItemID { get; set; }
+    public byte Amount { get; set; }
 }
 

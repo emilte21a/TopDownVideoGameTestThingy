@@ -1,4 +1,4 @@
-public abstract class Entity : GameObject
+public class Entity : GameObject
 {
 
     public Rectangle rectangle;

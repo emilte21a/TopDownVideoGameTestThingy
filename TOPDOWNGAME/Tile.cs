@@ -1,4 +1,3 @@
-
 public abstract class Tile : GameObject
 {
     public Rectangle rectangle;
@@ -13,6 +12,7 @@ public class StoneTile : Tile
 {
     static Texture2D stoneTexture;
 
+    [JsonConstructor]
     public StoneTile(Vector2 pos)
     {
         tileID = 0;
@@ -35,6 +35,7 @@ public class BackgroundTile : Tile
 {
     static Texture2D brickTexture;
 
+    [JsonConstructor]
     public BackgroundTile(Vector2 pos)
     {
         tileID = 1;
@@ -54,6 +55,8 @@ public class BackgroundTile : Tile
 public class IronOre : Tile
 {
     static Texture2D ironOreTexture;
+
+    [JsonConstructor]
     public IronOre(Vector2 pos)
     {
         tileID = 2;

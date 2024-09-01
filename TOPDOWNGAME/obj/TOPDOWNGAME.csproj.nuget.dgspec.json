@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Users\\macho\\TOPDOWNGAME222\\TOPDOWNGAME\\TOPDOWNGAME.csproj": {}
+    "C:\\Users\\macho\\TOPDOWNGAME222\\TOPDOWNGAME\\TOPDOWNGAME.csproj": {}
   },
   "projects": {
-    "c:\\Users\\macho\\TOPDOWNGAME222\\TOPDOWNGAME\\TOPDOWNGAME.csproj": {
+    "C:\\Users\\macho\\TOPDOWNGAME222\\TOPDOWNGAME\\TOPDOWNGAME.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\macho\\TOPDOWNGAME222\\TOPDOWNGAME\\TOPDOWNGAME.csproj",
+        "projectUniqueName": "C:\\Users\\macho\\TOPDOWNGAME222\\TOPDOWNGAME\\TOPDOWNGAME.csproj",
         "projectName": "TOPDOWNGAME",
-        "projectPath": "c:\\Users\\macho\\TOPDOWNGAME222\\TOPDOWNGAME\\TOPDOWNGAME.csproj",
+        "projectPath": "C:\\Users\\macho\\TOPDOWNGAME222\\TOPDOWNGAME\\TOPDOWNGAME.csproj",
         "packagesPath": "C:\\Users\\macho\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\macho\\TOPDOWNGAME222\\TOPDOWNGAME\\obj\\",
+        "outputPath": "C:\\Users\\macho\\TOPDOWNGAME222\\TOPDOWNGAME\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\macho\\AppData\\Roaming\\NuGet\\NuGet.Config"
