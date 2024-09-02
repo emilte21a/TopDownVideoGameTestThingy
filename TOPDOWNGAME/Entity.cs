@@ -3,6 +3,7 @@ public class Entity : GameObject
 
     public Rectangle rectangle;
 
+    
     public Vector2 lastDirection;
 
     public Vector2 position

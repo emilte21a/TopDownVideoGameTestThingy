@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TOPDOWNGAME")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a0d921899b8c6b9a71c3b5ab85590f7d39592ee3")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+733a8c2f2c1828c45d42576f358efeb719499aa0")]
 [assembly: System.Reflection.AssemblyProductAttribute("TOPDOWNGAME")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TOPDOWNGAME")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

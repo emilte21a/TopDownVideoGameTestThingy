@@ -1,6 +1,9 @@
 global using Raylib_cs;
 global using System.Numerics;
 global using System.Text.Json.Serialization;
+global using System.Text.Json;
+global using System.Runtime.Serialization.Formatters.Binary;
+global using System.IO;
 using Raylib_CsLo;
 using Raylib_CsLo.InternalHelpers;
 using System.Text.Json;
@@ -14,6 +17,7 @@ using MouseButton = Raylib_cs.MouseButton;
 using Raylib = Raylib_cs.Raylib;
 using Rectangle = Raylib_cs.Rectangle;
 using Sound = Raylib_cs.Sound;
+
 
 
 public class Game
@@ -95,7 +99,7 @@ public class Game
         zSortList.Sort((a, b) => a.Z_layer.CompareTo(b.Z_layer));
     }
 
-
+    GameState currentGameState;
 
     public void Run()
     {
@@ -137,6 +141,8 @@ public class Game
             {
                 if (exitToMainMenu)
                 {
+                    // string newSaveName = $"Save_{DateTime.Now.ToString("yyyyMMdd_HHmmss")}";
+                    SaveGame(currentGameState.SaveName);
                     currentScene = CurrentScene.start;
                     isLoadFilePageOpen = false;
                 }
@@ -199,6 +205,7 @@ public class Game
                         if (RayGui.GuiButton(new Raylib_CsLo.Rectangle(ScreenWidth / 2 - 100, ScreenHeight / 2 - 200 + i * 80, 200, 75), buttonText))
                         {
                             LoadGame(gameSaves[i].SaveName);
+                            currentGameState = gameSaves[i];
                             currentScene = CurrentScene.inGame;
                             isGamePaused = false;
                         }
@@ -310,9 +317,19 @@ public class Game
 
     private void StartNewGame()
     {
-        // Optionally, prompt the player for a save name
         string newSaveName = $"Save_{DateTime.Now.ToString("yyyyMMdd_HHmmss")}";
+
+        entities.Clear();
+        WorldGeneration.tilesInWorld.Clear();
         InitializeInstances();
+
+        var existingSave = gameSaves.FirstOrDefault(s => s.SaveName == newSaveName);
+        if (existingSave != null)
+        {
+            // Generate a new name or return to prevent overwriting
+            newSaveName += ".copy"; // Implement this to ensure uniqueness
+        }
+
         SaveGame(newSaveName);
         currentScene = CurrentScene.inGame;
         isGamePaused = false;
@@ -320,30 +337,27 @@ public class Game
 
     private GameState CaptureGameState()
     {
-        var gameState = new GameState
+        GameState gameState = new GameState()
         {
-            PlayerPosition = player.position,
-            Entities = new List<Entity>(entities),
+            PlayerPosition = new Vector2(player.position.X, player.position.Y),
+            Entities = new List<Entity>(entities.Select(e => e.DeepCopy())),
             TimeElapsed = timeElapsed,
             CameraZoom = camera.Zoom,
-            Tiles = new List<TileData>(),
-            InventoryItemDatas = new List<InventoryItemData>()
         };
 
-        // Capture tiles
-        foreach (Tile tile in worldGeneration.tileMap)
+        foreach (Tile tile in WorldGeneration.tilesInWorld)
         {
             if (tile != null)
             {
-                gameState.Tiles.Add(new TileData
+                TileData tileData = new TileData()
                 {
-                    Position = tile.position,
+                    Position = new Vector2(tile.position.X, tile.position.Y),
                     TileID = tile.tileID,
-                });
+                };
+                gameState.Tiles.Add(tileData);
             }
         }
 
-        // Capture inventory items
         foreach (ItemSlot itemSlot in player.inventory.itemsInInventory)
         {
             if (itemSlot.item != null)
@@ -355,10 +369,6 @@ public class Game
                 });
             }
         }
-
-        // Debugging logs
-        Console.WriteLine("Captured GameState:");
-        Console.WriteLine(JsonSerializer.Serialize(gameState, new JsonSerializerOptions { WriteIndented = true }));
 
         return gameState;
     }
@@ -426,13 +436,19 @@ public class Game
         {
             File.WriteAllText(filePath, jsonString);
             Console.WriteLine($"Game saved successfully to {filePath}.");
-            // Optionally, update the in-memory gameSaves list
-            // var existingSave = gameSaves.FirstOrDefault(s => s.SaveName == saveName);
-            // if (existingSave != null)
-            // {
-            //     gameSaves.Remove(existingSave);
-            // }
-            gameSaves.Add(gameState);
+
+            // Check if the save already exists and update it, otherwise add a new one
+            var existingSave = gameSaves.FirstOrDefault(s => s.SaveName == saveName);
+            if (existingSave != null)
+            {
+                int index = gameSaves.IndexOf(existingSave);
+                gameSaves[index] = gameState;
+            }
+            else
+            {
+                gameSaves.Add(gameState);
+            }
+            SaveAllGameSaves("Saves/saves.JSON");
         }
         catch (Exception ex)
         {
@@ -442,7 +458,7 @@ public class Game
 
     private void LoadGame(string saveName)
     {
-        string filePath = Path.Combine("Saves", $"{saveName}.json");
+        string filePath = Path.Combine("bin/Saves", $"{saveName}.json");
         try
         {
             if (File.Exists(filePath))
@@ -499,9 +515,32 @@ public class Game
         return saves;
     }
 
+    private void LoadAllGameSaves(string filePath)
+    {
+        if (File.Exists(filePath))
+        {
+            try
+            {
+                string jsonString = File.ReadAllText(filePath);
+                gameSaves = JsonSerializer.Deserialize<List<GameState>>(jsonString) ?? new List<GameState>();
+                Console.WriteLine("All game saves loaded successfully.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to load game saves: {ex.Message}");
+                gameSaves = new List<GameState>();
+            }
+        }
+        else
+        {
+            Console.WriteLine("No game saves file found, starting fresh.");
+            gameSaves = new List<GameState>();
+        }
+    }
+
     private void DeleteSave(string saveName)
     {
-        string filePath = Path.Combine("Saves", $"{saveName}.json");
+        string filePath = Path.Combine("bin/Saves", $"{saveName}.json");
         try
         {
             if (File.Exists(filePath))
@@ -539,26 +578,5 @@ public class Game
         }
     }
 
-    private void LoadAllGameSaves(string filePath)
-    {
-        if (File.Exists(filePath))
-        {
-            try
-            {
-                string jsonString = File.ReadAllText(filePath);
-                gameSaves = JsonSerializer.Deserialize<List<GameState>>(jsonString) ?? new List<GameState>();
-                Console.WriteLine("All game saves loaded successfully.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Failed to load game saves: {ex.Message}");
-                gameSaves = new List<GameState>();
-            }
-        }
-        else
-        {
-            Console.WriteLine("No game saves file found, starting fresh.");
-            gameSaves = new List<GameState>();
-        }
-    }
+
 }

@@ -4,10 +4,10 @@ public class GameState
     public DateTime SaveDate { get; set; } = DateTime.Now;
     public Vector2 PlayerPosition { get; set; }
     public int TimeElapsed { get; set; }
-    public List<TileData> Tiles { get; set; }
+    public List<TileData> Tiles { get; set; } 
     public float CameraZoom { get; set; }
-    public List<Entity> Entities { get; set; }
-    public List<InventoryItemData> InventoryItemDatas { get; set; }
+    public List<Entity> Entities { get; set; } 
+    public List<InventoryItemData> InventoryItemDatas { get; set; } 
 
     public GameState()
     {
